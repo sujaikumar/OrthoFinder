@@ -600,11 +600,11 @@ class WaterfallMethod:
         util.PrintTime("Initial processing of each species")
         # process up to the best hits for each species
         for iSpecies in xrange(self.thisBfp.nSpecies):
-            Bi = []
-            for jSpecies in xrange(self.thisBfp.nSpecies):
-                Bij = self.thisBfp.GetBLAST6Scores(iSpecies, jSpecies)  
-                Bij = self.NormaliseScores(Bij, Lengths, iSpecies, jSpecies)
-                Bi.append(Bij)
+            # -- start parallelisation - sujaikumar 2016-02-19
+            from pathos.multiprocessing import ProcessingPool
+            pool = ProcessingPool(nodes=nBlast)
+            Bi = pool.map(lambda x, y: self.NormaliseScores(self.thisBfp.GetBLAST6Scores(iSpecies, y), x, iSpecies, y), [Lengths]*nSpecies, xrange(nSpecies))
+            # -- end parallelisation - sujaikumar 2016-02-19
             self.DumpMatrixArray("B", Bi, iSpecies)
             BH = self.thisBfp.GetBH_s(Bi, iSpecies)
             self.DumpMatrixArray("BH", BH, iSpecies)
